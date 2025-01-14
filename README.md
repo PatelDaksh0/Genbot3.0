@@ -1,4 +1,4 @@
-GenBot3.0
+
 GenBot3.0 is a Flask-based chatbot application that allows users to interact with a chatbot. The application includes user authentication (login and signup), chat history management, and a feature to clear chat history. The chat interface is designed to be user-friendly and occupies the entire webpage for an immersive experience.
 
 Features
