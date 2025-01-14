@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenBot2.0</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Welcome to GenBot2.0</h1>
+            <div>
+                <button id="clear-history">Clear History</button>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+        <div class="chat-box" id="response">
+            {% if chat_history %}
+                {% for line in chat_history.split('\n') %}
+                    <div class="message {% if 'User:' in line %}user-message{% else %}bot-message{% endif %}">{{ line }}</div>
+                {% endfor %}
+            {% else %}
+                <div class="message bot-message">Bot: Hello! How can I help you today?</div>
+            {% endif %}
+        </div>
+        <div class="chat-input">
+            <form id="chat-form">
+                <input type="text" id="message" name="message" placeholder="Enter your message..." required>
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("chat-form").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const messageInput = document.getElementById("message");
+            const message = messageInput.value;
+            const responseDiv = document.getElementById("response");
+
+            if (message.trim() === "") return;
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ message: message }),
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    responseDiv.innerHTML += `<div class="message user-message">User: ${message}</div>`;
+                    responseDiv.innerHTML += `<div class="message bot-message">Bot: ${data.response}</div>`;
+                } else {
+                    responseDiv.innerHTML += `<div class="message bot-message">Error: ${data.error}</div>`;
+                }
+                responseDiv.scrollTop = responseDiv.scrollHeight;
+                messageInput.value = ""; // Clear the input box
+            } catch (error) {
+                responseDiv.innerHTML += `<div class="message bot-message">Error: ${error.message}</div>`;
+            }
+        });
+
+        document.getElementById("message").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                document.getElementById("chat-form").dispatchEvent(new Event("submit"));
+            }
+        });
+
+        document.getElementById("clear-history").addEventListener("click", async function() {
+            const responseDiv = document.getElementById("response");
+
+            try {
+                const response = await fetch("/clear_history", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+                if (response.ok) {
+                    responseDiv.innerHTML = `<div class="message bot-message">Bot: Hello! How can I help you today?</div>`;
+                } else {
+                    const data = await response.json();
+                    responseDiv.innerHTML += `<div class="message bot-message">Error: ${data.error}</div>`;
+                }
+                responseDiv.scrollTop = responseDiv.scrollHeight;
+            } catch (error) {
+                responseDiv.innerHTML += `<div class="message bot-message">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>
